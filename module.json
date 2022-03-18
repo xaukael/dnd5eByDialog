@@ -1,0 +1,17 @@
+
+{
+    "name": "dnd5eByDialog",
+    "title": "dnd5eByDialog",
+    "description": "Absurd dialog macros turned into a module",
+    "author": "Allen",
+    "version": "0.0.1",
+    "minimumCoreVersion": "0.8.9",
+    "compatibleCoreVersion": "0.8.9",
+    "scripts": ["dnd5eByDialog.js"],
+    "dependencies": [
+      {"name": "dfreds-convenient-effects"}
+    ],
+    "url": "",
+    "manifest": "",
+    "download": ""
+}
