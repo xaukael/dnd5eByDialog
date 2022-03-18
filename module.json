@@ -12,6 +12,6 @@
       {"name": "dfreds-convenient-effects"}
     ],
     "url": "",
-    "manifest": "",
-    "download": ""
+    "manifest": "https://github.com/xaukael/dnd5eByDialog/raw/main/module.json",
+    "download": "https://github.com/xaukael/dnd5eByDialog/raw/main/dnd5eByDialog-main.zip"
 }
