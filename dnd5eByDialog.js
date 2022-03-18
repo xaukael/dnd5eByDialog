@@ -2797,7 +2797,8 @@ Dialog.persist({
     if (token) actor = token.actor;
     let character = game.user.character;
     
-  $('#custom-css').remove();
+  if ($('#custom-css').length) return $('#custom-css').remove();
+else
 $('body').append(`<div id="custom-css" style="position: absolute; left: -1000;"><style>
 #context-menu {
 	z-index: 1000;
