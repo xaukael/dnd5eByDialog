@@ -1,7 +1,7 @@
 
 class dnd5eByDialog {
 
-static actorMenuOnControl = true;
+static actorMenuOnControl = false;
   
 static async actorMenu(...args){
     if (!args[0]) args = [{}];
@@ -3023,7 +3023,7 @@ Hooks.on("getSceneControlButtons",(controlButtons) => {
             name: "actor-menu",
             title: "Actor Menu",
             icon: "fas fa-list",
-            toggle: false,
+            toggle: true,
             onClick: toggled => {
               dnd5eByDialog.actorMenuOnControl = toggled;
             }
