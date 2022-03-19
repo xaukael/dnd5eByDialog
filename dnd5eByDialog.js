@@ -3,7 +3,7 @@ class dnd5eByDialog {
 
 static actorMenuOnControl = true;
   
-  static async actorMenu(...args){
+static async actorMenu(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -208,10 +208,12 @@ Dialog.persist({
       return;}
 },position
 );//.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async characterDialog(...args){
+static async characterDialog(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -267,9 +269,9 @@ if (combatPopout && !actorUuid) {
   position.left = combatPopout.position.left + 305;
 }
 
-if (!game.user.isGM) ui.nav._element.hide();
+//if (!game.user.isGM) ui.nav._element.hide();
 
-if (!Hooks._hooks.preCreateChatMessage || Hooks._hooks.preCreateChatMessage?.findIndex(f=>!f.toString().includes('chatmessagetargetflags')!==-1))
+if (!Hooks._hooks.preCreateChatMessage || Hooks._hooks.preCreateChatMessage?.findIndex(f=>f.toString().includes('chatmessagetargetflags'))==-1)
   Hooks.on(`preCreateChatMessage`, async (message, data, options, user) => {
     //chatmessagetargetflags
     if (message.data.flavor?.toUpperCase().includes('ATTACK') || message.data.flavor?.toUpperCase().includes('CAST'))
@@ -1236,17 +1238,21 @@ Dialog.persist({
   },position
 );
 //d.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async chatMessagesDialog(...args){
+static async chatMessagesDialog(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
     if (token) actor = token.actor;
     let character = game.user.character;
     
-  async function toggleEffect(effect) {
+  if (!game.user.isGM) return;
+
+async function toggleEffect(effect) {
   for (let t of canvas.tokens.controlled) {
   let actorUuid = t.actor.uuid;
   await game.dfreds.effectInterface.toggleEffect(effect, actorUuid);
@@ -1263,7 +1269,7 @@ let ce = game.modules.get("dfreds-convenient-effects").active;
 
 let title = "Roll Messages";
 let windowId = "roll-messages-dialog"
-let position = { height: 800, width : 400 , id: windowId};
+let position = { height: 800, width : 420 , id: windowId};
 let header = `<h4><a onclick="dnd5eByDialog.chatMessagesDialog()"  style="margin: 0 0 0 0;">${title}</a></h4>`
 if (!Hooks._hooks.renderChatMessage || Hooks._hooks.renderChatMessage?.findIndex(f=>f.toString().includes('renderchatmessagesdialog'))==-1)
   Hooks.on(`renderChatMessage`, (message, html, data) => { 
@@ -1281,9 +1287,9 @@ if (!Hooks._hooks.deleteChatMessage || Hooks._hooks.deleteChatMessage?.findIndex
       //console.log('new message:', message);
     }
   });
-
+//${$("#roll-messages-dialog").height()-55}px    height: 640px;
 let content=`
-<div id="messages-dialog-content" style="display:flex; flex-direction: column-reverse; height: ${$("#roll-messages-dialog").height()-55}px;overflow-y: auto;overflow-x: hidden; position: abolute;">
+<div id="messages-dialog-content" style="display:flex; flex-direction: column-reverse;  width: 410px; height: 760px; overflow-y: auto; overflow-x: hidden; ">
 `;
 let users = {};
 let usersDamageTotal = {};
@@ -1522,6 +1528,7 @@ Dialog.persist({
   content:  content,
   buttons: {},
   render: (html) => {
+    $("#messages-dialog-content").css('height', `${$("#roll-messages-dialog").height()-55}px`)
     //$('#messages-dialog-content').scrollTop($('#messages-dialog-content').height());
     if ($('#alias-select').val()) {
         $(`div.cm`).css('display', 'none');
@@ -1674,10 +1681,12 @@ Dialog.persist({
 },position
 );
 //d.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async whisperRequestInlineRoll(...args){
+static async whisperRequestInlineRoll(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -1827,10 +1836,12 @@ Dialog.persist({
       return}
 },{width: 330 , left: 110, top: 80, id:`request-roll-dialog` }
 );
-  }
+  
+  return true;
+}
   
   
-  static async inlineRollBuilder(...args){
+static async inlineRollBuilder(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2112,10 +2123,12 @@ let d = new Dialog({
   close:   html => {
     return}
 },{ width: 400,  id:`inline-roll-dialog`, }).render(true);
-  }
+  
+  return true;
+}
   
   
-  static async moreConvenientEffects(...args){
+static async moreConvenientEffects(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2185,10 +2198,12 @@ Dialog.persist({
       return}
 },{ height:400, width:250 , id: "df-effects-directory"}
 );
-  }
+  
+  return true;
+}
   
   
-  static async actorEffectsList(...args){
+static async actorEffectsList(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2291,10 +2306,12 @@ new Dialog({
 }, position
 ).render(true);
 //d.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async spellPreparation(...args){
+static async spellPreparation(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2385,10 +2402,12 @@ Dialog.persist({
 },position
 );
 //await d.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async spellPreparationSets(...args){
+static async spellPreparationSets(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2473,10 +2492,12 @@ async function dialogYesNo(prompt) {
   });
   return response;
 }
-  }
+  
+  return true;
+}
   
   
-  static async restDialog(...args){
+static async restDialog(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2572,10 +2593,12 @@ Dialog.persist({
       return}
 },position
 );//.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async rollDialog(...args){
+static async rollDialog(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2751,10 +2774,12 @@ Dialog.persist({
       return;
     }
 },position);//.render(true);
-  }
+  
+  return true;
+}
   
   
-  static async characterDialogOnTurnHook(...args){
+static async characterDialogOnTurnHook(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2787,10 +2812,12 @@ Dialog.persist({
     Hooks._hooks.updateCombat.splice(Hooks._hooks.updateCombat.findIndex(f=>f.toString().includes('CharacterDialogOnTurnHook')), 1)
   ui.notifications.info('Character Dialog On Turn Hook Removed');
 }
-  }
+  
+  return true;
+}
   
   
-  static async customCSS(...args){
+static async customCSS(...args){
     if (!args[0]) args = [{}];
     let actor;
     let token = canvas.tokens.controlled[0];
@@ -2813,9 +2840,10 @@ img {
 	margin: 3.5px 1px 0px 1px;
 	height: 20px;
 }
-#chat-form > textarea {
-	height: 10px;	
-}
+/*
+#chat-form > textarea{
+  height: 10px;	
+}*/
 #chat-form  {
 	height: 30px;	
 	flex-basis: 50px;
@@ -2955,7 +2983,9 @@ section > * > input {
 }
 </style></div>`)
 $('#custom-css').hide();
-  }
+  
+  return true;
+}
   
 
   
@@ -2988,7 +3018,7 @@ Hooks.on("getSceneControlButtons",(controlButtons) => {
             name: "actor-menu",
             title: "Actor Menu",
             icon: "fas fa-list",
-            toggle: true,
+            toggle: false,
             onClick: toggled => {
               dnd5eByDialog.actorMenuOnControl = toggled;
             }
@@ -3005,7 +3035,7 @@ Hooks.on("getSceneControlButtons",(controlButtons) => {
             }
         }
     );
-    controlButtons.find(b => b.layer === "tokens").tools.find(t=>t.name==="target").icon = "fas fa-crosshairs";
+    //controlButtons.find(b => b.layer === "tokens").tools.find(t=>t.name==="target").icon = "fas fa-crosshairs";
 });
 
 Object.getPrototypeOf(Dialog).persist = function(data, options) {
