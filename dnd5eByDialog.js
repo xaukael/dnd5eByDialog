@@ -316,9 +316,9 @@ function itemFilter(i){
   }
   if( i.data.type === "spell"){
     if( i.data.data.preparation ){
-      if( i.data.data.preparation.prepared )
-        return true;
-      if( i.labels.level === "Cantrip")
+      if(i.data.data.preparation.mode ==="prepared"  )
+        return i.data.data.preparation.prepared;
+      else //( i.labels.level === "Cantrip")
         return true;
     }
     return false ;
@@ -411,17 +411,24 @@ for (const x of actorItems) {
   //if ( x.type === 'spell') console.log(x.data.name, x.data.data.level, actor.data.data.spells['spell'+x.data.data.level]?.slotsAvailable);
   //console.log(actor.data.data.spells);
   if ( x.type === 'spell' &&  !actor.data.data.spells['spell'+x.data.data.level]?.slotsAvailable) available = false;
-  if ( x.data.data.consume?.type === "charges") if (actor.items.get(x.data.data.consume?.target).data.data.uses.value === 0) available = false;
+  
   if (x.data.data.quantity===0) available = false;
   
   if (x.data.data.uses?.value !== 0 && x.data.data.uses?.max > 0 ) available = true;
   if( x.data.type === "spell"){
-    if( x.data.data.preparation ){
+    if( x.data.data.preparation?.mode === "prepared"){
       if(! x.data.data.preparation.prepared )
         available = false ;
     }
   }
+  if ( x.type === 'spell' && x.data.data.preparation?.mode === "atwill")
+    available = true;
   if (x.type === 'spell' && x.data.data.level === 0) available = true;
+  if ( x.data.data.consume?.type === "charges") {
+    if (actor.items.get(x.data.data.consume?.target).data.data.uses.value < x.data.data.consume.amount) available = false;
+    else available = true;
+  }
+  
   let title = '';
   if (x.type === 'spell'){
     title +=  `${x.labels.level}\n`;
@@ -624,11 +631,12 @@ Dialog.persist({
       $(`.roll-dialog-button-${t}`).each(function() {
         $(this).click(async function(e){
           let vars = this.name.split('-');
+          console.log(vars)
           dnd5eByDialog.rollDialog({
             actorUuid: vars[0].replaceAll('_','.'),
             rollType: vars[1],
             abilType: vars[2], 
-            psoition: {left: e.clientX - 15, top: e.clientY + 15}, 
+            position: {left: e.clientX - 15, top: e.clientY + 15}, 
             closeOnMouseLeave});
           //dnd5eByDialog.rollDialog(vars[0].replaceAll('_','.'),vars[1],vars[2], {left: e.clientX - 15, top: e.clientY + 15}, false);
         });
@@ -690,10 +698,9 @@ Dialog.persist({
         let attackToHit = x.getAttackToHit();
         if (attackToHit){
           //<a class="inline-roll roll" title="Bite Attack" data-mode="roll" data-flavor="Bite Attack" data-formula="1d20 + 4 + 3"><i class="fas fa-dice-d20"></i> 1d20 + 4 + 3</a></td><td align="right">
-          console.log(attackToHit);
           text += '<tr><th align="left">Attack</th><td style="color: #000" >[[/r 1d20 + ' + 
             //Roll.parse(attackToHit.parts.reduce((a,t) => a+=" + " + t , ""), attackToHit.rollData).reduce((a,t) => a+=t.formula, "") +
-            Roll.getFormula(Roll.parse(attackToHit.parts.join(' + '), attackToHit.rollData)) + 
+            game.dnd5e.dice.simplifyRollFormula(new Roll(attackToHit.parts.join(' + '), attackToHit.rollData).formula) + 
             ` # ${x.data.name} - Attack]] 
             <a id="${x.id}-inline-adv"  class="my-inline-roll" >ADV</a>
             <a id="${x.id}-inline-d20"  class="my-inline-roll" style="display:none"><i class="fas fa-dice-d20"></i></a>
@@ -703,20 +710,25 @@ Dialog.persist({
         
         //-----------DAMAGE---------------//
         let damageRolls = [];  
+        let dpIndex = 0;
+        let itemRollData = x.getRollData();
         
         if (x.data.data.damage)
         for (let dp of x.data.data.damage.parts) {
-          let damageRoll = new Roll(dp[0], x.getRollData());
-          for (let t of damageRoll.terms.filter(t=> t.constructor.name === 'Die' || t.constructor.name === 'MathTerm' ))
+          let rollFlavor = x.data.name;
+          let damageRoll = new Roll(dp[0], itemRollData);
+          for (let t of damageRoll.terms.filter(t=> t.constructor.name === 'Die' || t.constructor.name === 'MathTerm' )){
+            if (t.options.flavor) rollFlavor = t.options.flavor;
             t.options.flavor = dp[1];
-          let dr = '<tr><th align="left">' + (dp[1] ? dp[1].capitalize(): '') + 
-             `</th><td>[[/r ` + Roll.fromTerms(damageRoll.terms)._formula +  ` # ${x.data.name} - ` +  (dp[1]?dp[1].capitalize():'') + (dp[1] === 'healing'?``:` Damage`)+ `]] `;
+          }
+          let dr = '<tr><th align="left">' + (rollFlavor ? rollFlavor.capitalize(): '') + 
+             `</th><td>[[/r ` + Roll.fromTerms(damageRoll.terms)._formula + 
+              ((dpIndex==0 && itemRollData.bonuses[itemRollData.item.actionType]?.damage)?`${new Roll(itemRollData.bonuses[itemRollData.item.actionType].damage).formula}`:``) + 
+             ` # ${rollFlavor} - ` +  (dp[1]?dp[1].capitalize():'') + 
+             (dp[1] === 'healing'?``:` Damage`) + `]] `;
           
           if (x.data.data.scaling?.formula)  
             dr += `<a id="${x.id}-inline-scaling"  class="my-inline-roll" name="${x.id}"> + ${x.data.data.scaling?.formula}</a> `;
-            /*
-          dr += `[[/r ` + Roll.fromTerms(damageRoll.terms.filter(t=> t.constructor.name === 'Die' || t.constructor.name === 'MathTerm'))._formula +  ` # ${x.data.name} - ` +  (dp[1]?dp[1].capitalize():'') + (dp[1] === 'healing'?``:` Damage`)+ `]] `;
-            */
           if (attackToHit)  
           dr += `<a id="${x.id}-inline-crit"  class="my-inline-roll">Critical</a>`;
           
@@ -725,6 +737,7 @@ Dialog.persist({
             dr+='</td></tr>';
             
           damageRolls.push(dr);
+          dpIndex++;
         }
         if (!actor.shield?.data.data.equipped && x.data.data?.damage?.versatile){
           let dt = x.data.data.damage.parts[0][1];
@@ -1074,15 +1087,13 @@ Dialog.persist({
                 });
                 
                 $(`a[id^=${x.id}-charges-count]`).contextmenu(async function(e){
-                  
-                  //$(this).off('oncontextmenu');
                   let item  = actor.items.get(this.name);
                   
                   let uses = JSON.parse(JSON.stringify(item.data.data.uses));
                   if (uses.value < uses.max) {
                     uses.value++;
                     await actor.updateEmbeddedDocuments("Item", [{_id: item.id, "data.uses": uses}]);
-                    $(`a#${x.id}-charges-count`).html(`${uses.value}/${uses.max}`);
+                    $(`a[id$='-charges-count'][name='${this.name}']`).html(`${uses.value}/${uses.max}`);
                     $(`a#roll-${item.id}`).html(`${item.data.name} (${uses.value}/${uses.max})`);
                   }
                   if (uses.value > 0) {
@@ -1093,7 +1104,6 @@ Dialog.persist({
                 });
                 
                 $(`a[id^=${x.id}-charges-count]`).click(async function(e){
-                  //$(this).off('onclick');
                   let item = actor.items.get(this.name);
                   
                   let uses = JSON.parse(JSON.stringify(item.data.data.uses));
@@ -1101,7 +1111,7 @@ Dialog.persist({
                   if (uses.value > 0) {
                     uses.value--;
                     await actor.updateEmbeddedDocuments("Item", [{_id: item.id, "data.uses": uses}]);
-                    $(`a#${x.id}-charges-count`).html(`${uses.value}/${uses.max}`);
+                    $(`a[id$='-charges-count'][name='${this.name}']`).html(`${uses.value}/${uses.max}`);
                     $(`a#roll-${item.id}`).html(`${item.data.name} (${uses.value}/${uses.max})`);
                   }
                   if (uses.value == 0) {
@@ -1229,8 +1239,8 @@ Dialog.persist({
         else 
           canvas.tokens.releaseAll();
         
-        for ( let w of Object.values(ui.windows).filter(w=> w.id.includes(`item-rolls-dialog-${t}`)))
-          ui.windows[w.appId].bringToTop();
+        for ( let w of Object.values(ui.windows).filter(w=> w.id.includes(`${t}`)))
+          ui.windows[w.appId].bringToTop();//item-rolls-dialog-
       });
       //$(`#items-dialog-${t}`).addClass('clickToToken');
   },
@@ -1294,7 +1304,7 @@ if (!Hooks._hooks.deleteChatMessage || Hooks._hooks.deleteChatMessage?.findIndex
   });
 //${$("#roll-messages-dialog").height()-55}px    height: 640px;
 let content=`
-<div id="messages-dialog-content" style="display:flex; flex-direction: column-reverse;  width: 410px; height: 760px; overflow-y: auto; overflow-x: hidden; ">
+<div id="messages-dialog-content" style="display:flex; flex-direction: column-reverse;  width: 100%; height: 760px; overflow-y: auto; overflow-x: hidden; ">
 `;
 let users = {};
 let usersDamageTotal = {};
@@ -1382,7 +1392,7 @@ for (let m of game.messages.contents.filter(m=> ((m.data.roll || m.data.flavor) 
         usersDamageCritical[user] = true;
     }
     if (m.data.flavor?.toUpperCase().includes('ATTACK'))
-      message += `<p title="${title}"><a class="applyTargets" data-mid="${m.id}">${roll.formula} =  ${roll.total}</a></p>`;
+      message += `<p title="${title}"><a class="applyTargets" data-mid="${m.id}">${roll.formula} =  ${roll.total}</a>${usersAttackCritical[user]?'&ensp;Critical!':''}</p>`;
     else
       message += `<p title="${title}"><a class="applyDamage" data-val="${roll.total}" data-crit="${usersAttackCritical[user]}">${roll.formula} =  ${roll.total}</a> </p>`;
     /*
@@ -2244,7 +2254,7 @@ let closeTimeout = 1000;
 
 let list=`
 
-<div id="effectsUL" style="" >
+<div style="" >
 `;
 let activeEffects = [...actor.effects];
 for (const effect of activeEffects){
@@ -2612,6 +2622,8 @@ static async rollDialog(...args){
     
   let {actorUuid, rollType, abilType, position, closeOnMouseLeave} = args[0] || {};
 let closeTimeout = 1000;
+
+console.log(actorUuid, rollType, abilType, position, closeOnMouseLeave)
 let t = '';
 
 if (!token) token = _token;
@@ -2646,20 +2658,30 @@ if (rollType === 'abilities' && abilType === 'test')
 if (rollType === 'skills')
   roll = `Skill`;
   
+let bonusType = '';
+if (rollType === 'abilities' && abilType === 'save')
+  bonusType = `save`;
+if (rollType === 'abilities' && abilType === 'test')
+  bonusType = `check`;
+if (rollType === 'skills')
+  bonusType = `skill`;
+  
+let addedBonus = new Roll(actor.getRollData().bonuses.abilities[bonusType]).formula;
+  
 let left = 110;
-let width = 330;
+let width = '100%';
 let w_id = `${t}-${roll}-dialog`;
 let positionDefault =  
   {  width: width ,  left: left , id: w_id};
 position = {...positionDefault, ...position};
-
+/*
 let wTargets = [];
 
 for (const [key, value] of Object.entries(actor.data.permission)) {
   if (key !== 'default' && value === 3)
     wTargets.push(game.users.get(key).name)
 }
-let whisperTargets = wTargets.join(', ')
+let whisperTargets = wTargets.join(', ')*/
 console.log('?', actor.data.data[rollType]);
 let content = `
 <style>
@@ -2675,12 +2697,12 @@ let content = `
   font-size: 1.5em; border-bottom: 1px solid #782e22; margin-right:.1em;
   }
 </style>
-<div style="display:grid; grid-template-columns:1fr 1fr;">`;
+<div style="display:grid; grid-template-columns:100px auto;">`;
 for (const [key, value] of Object.entries(actor.data.data[rollType])){
   let text = CONFIG.DND5E[rollType][key] ;
   content += `<div align="left" style="margin-bottom:.75em;">${text}</div>
-    <div align="left"> 
-    [[/r 1d20 + ${value[bonus]} # ${text} ${abilType}]]
+    <div align="right"> 
+    [[/r 1d20 + ${value[bonus]}${(addedBonus)?addedBonus: ''} # ${text} ${abilType}]]
     <a id="inline-adv"  class="my-inline-roll" >ADV</a>
     <a id="inline-d20"  class="my-inline-roll" style="display:none"><i class="fas fa-dice-d20"></i></a>
     <a id="inline-dis"  class="my-inline-roll" >DIS</a>
@@ -2762,6 +2784,7 @@ Dialog.persist({
         $(this).prev().click();
         targetElement.attr('data-flavor', targetElement.attr('data-flavor').replace(' with disadvantage',''));
       });
+      /*
       $(`#${w_id}`).find(`section.window-content`).click(async function(e){
         console.log(this);
         let placeables = canvas.tokens.placeables.filter(tp => tp.actor?.uuid === t.replaceAll('_','.'))
@@ -2772,7 +2795,7 @@ Dialog.persist({
         
         for ( let w of Object.values(ui.windows).filter(w=> w.id !== `menu-${t}` && w.id.includes(`${t}`)))
           ui.windows[w.appId].bringToTop();
-      });
+      });*/
     },
     buttons : {},
     close:   html => { 
