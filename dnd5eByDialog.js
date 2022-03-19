@@ -1,7 +1,7 @@
 
 class dnd5eByDialog {
 
-static actorMenuOnControl = false;
+static actorMenuOnControl = true;
   
 static async actorMenu(...args){
     if (!args[0]) args = [{}];
