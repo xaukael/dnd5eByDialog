@@ -33,7 +33,12 @@ let position =  { width: '100%',  left: 125, top: 75, id: w_id};
 
 
 //if($(`#menu-${t}`).length) return ui.windows[$(`#menu-${t}`).attr('data-appid')].close();
-$('.actor-menu').hide();
+$('.actor-menu').each(async function(){
+  let this_id = $(this).attr('id');
+  if (this_id !== w_id) 
+    Object.values(ui.windows).find(w=> w.id === this_id).close();
+});
+
 let types = [];
 
 for (let [type, array] of Object.entries(actor.itemTypes) ) {
@@ -44,7 +49,7 @@ for (let [type, array] of Object.entries(actor.itemTypes) ) {
 }
 let length = types.length + 6;
 if (types.includes('Spells')) length ++;
-console.log(types, length)
+//console.log(types, length)
 let content = `
 <div style="margin: 0 3px; position: absolute; right:60px; top: 7px;">
   <input type="checkbox" id="${t}-closeOnMouseLeave" style="float:right; margin-top: 3px;  height: 12px;">
