@@ -35,10 +35,14 @@ let position =  { width: '100%',  left: 125, top: 75, id: w_id};
 //if($(`#menu-${t}`).length) return ui.windows[$(`#menu-${t}`).attr('data-appid')].close();
 $('.actor-menu').each(async function(){
   let this_id = $(this).attr('id');
-  if (this_id !== w_id) 
-    Object.values(ui.windows).find(w=> w.id === this_id).close();
+  if (this_id === w_id) return;
+  let _w = Object.values(ui.windows).find(w=> w.id === this_id);
+  position = _w.position;
+  _w.close();
 });
 
+position['width'] = '100%';
+position['id'] = w_id;
 let types = [];
 
 for (let [type, array] of Object.entries(actor.itemTypes) ) {
@@ -390,8 +394,8 @@ let content=`
 
 let header = `${actor.data.name}`;
 console.log(type)
-if (type) header = `${actor.data.name} - ${(type==='feat'?'Features':((['equipment', 'loot'].includes(type))?type:type+'s')).capitalize()}`;
-//<a style="float:left;margin-left:0;" onclick="game.actors.get('${actor.id}').sheet.render(true)" title="Sheet"><img src="${actor.data.token.img}" height="20" style="border:unset;vertical-align:middle;"/></a>
+if (type) header = `${(type==='feat'?'Features':((['equipment', 'loot'].includes(type))?type:type+'s')).capitalize()}`;
+//<a style="float:left;margin-left:0;" onclick="game.actors.get('${actor.id}').sheet.render(true)" title="Sheet"><img src="${actor.data.token.img}" height="20" style="border:unset;vertical-align:middle;"/></a>${actor.data.name} - 
 if (!type)
 content+=`
 <div style="display: grid; grid-template-columns: repeat(5,auto); border-bottom:0px solid black;border-top:0px solid black;margin-bottom:.5em">
