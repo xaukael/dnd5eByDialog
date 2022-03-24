@@ -4,7 +4,7 @@
     "title": "dnd5eByDialog",
     "description": "Absurd dialog macros turned into a module",
     "author": "Allen",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "minimumCoreVersion": "0.8.9",
     "compatibleCoreVersion": "0.8.9",
     "scripts": ["dnd5eByDialog.js"],
@@ -13,5 +13,5 @@
     ],
     "url": "https://github.com/xaukael/dnd5eByDialog/",
     "manifest": "https://github.com/xaukael/dnd5eByDialog/raw/main/module.json",
-    "download": "https://github.com/xaukael/dnd5eByDialog/raw/main/dnd5eByDialog-main.zip"
+    "download": "https://github.com/xaukael/dnd5eByDialog/raw/main/dnd5eByDialog.zip"
 }
