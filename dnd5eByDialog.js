@@ -733,13 +733,13 @@ Dialog.persist({
         
         if (item.data.data.damage)
         for (let dp of item.data.data.damage.parts) {
-          let rollFlavor = dp[1];
+          let rollFlavor = item.name;
           let damageRoll = new Roll(dp[0], itemRollData);
           for (let term of damageRoll.terms.filter(term=> term.constructor.name === 'Die' || term.constructor.name === 'MathTerm' )) {
             if (term.options.flavor && term.options.flavor !== dp[1]) rollFlavor = term.options.flavor;
             term.options.flavor = dp[1];
           }
-          let dr = '<tr><th align="left">' + (rollFlavor ? rollFlavor.capitalize(): '') + 
+          let dr = '<tr><th align="left">' + (rollFlavor===item.name?dp[1].capitalize():rollFlavor) + 
              `</th><td>[[/r ` + Roll.fromTerms(damageRoll.terms)._formula + 
               ((dpIndex==0 && itemRollData.bonuses[itemRollData.item.actionType]?.damage)?`${new Roll(itemRollData.bonuses[itemRollData.item.actionType].damage).formula}`:``) + 
              ` # ${rollFlavor} - ` +  (dp[1]?dp[1].capitalize():'') + 
