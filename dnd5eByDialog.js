@@ -740,11 +740,8 @@ Dialog.persist({
             term.options.flavor = dp[1];
           }
           let dr = '<tr><th align="left">' + (rollFlavor===item.name?dp[1].capitalize():rollFlavor) + 
-             `</th><td>[[/r ` + Roll.fromTerms(damageRoll.terms)._formula + 
-              ((dpIndex==0 && itemRollData.bonuses[itemRollData.item.actionType]?.damage)?`${new Roll(itemRollData.bonuses[itemRollData.item.actionType].damage).formula}`:``) + 
-             ` # ${rollFlavor} - ` +  (dp[1]?dp[1].capitalize():'') + 
-             (dp[1] === 'healing'?``:` Damage`) + `]] `;
-          
+             `</th><td>[[/r ${Roll.fromTerms(damageRoll.terms)._formula}  # ${rollFlavor} - ${dp[1]?dp[1].capitalize():''} ${(dp[1] === 'healing'?'':'Damage')} ]] `;
+            //((dpIndex==0 && itemRollData.bonuses[itemRollData.item.actionType]?.damage)?`${new Roll(itemRollData.bonuses[itemRollData.item.actionType].damage).formula}`:``) + 
           if (item.data.data.scaling?.formula)  
             dr += `<a id="${item.id}-inline-scaling"  class="my-inline-roll" name="${item.id}"> + ${item.data.data.scaling?.formula}</a> `;
           if (attackToHit)  
@@ -755,8 +752,24 @@ Dialog.persist({
             dr+='</td></tr>';
             
           damageRolls.push(dr);
+          
+          if (dpIndex==0 && itemRollData.bonuses[itemRollData.item.actionType]?.damage) {
+            rollFlavor = '';
+            let bonusDamageRoll = new Roll(itemRollData.bonuses[itemRollData.item.actionType].damage);
+            for (let term of bonusDamageRoll.terms.filter(term=> term.constructor.name === 'Die' || term.constructor.name === 'MathTerm' )) {
+              if (term.options.flavor && term.options.flavor !== dp[1]) rollFlavor = term.options.flavor;
+            }
+            let db = '<tr><th align="left"> Bonus '+
+             `</th><td>[[/r ${bonusDamageRoll.formula} # Bonus - ${rollFlavor?rollFlavor:dp[1].capitalize()} ${(dp[1] === 'healing'?'':'Damage')} ]] `;
+             db += `<a id="${item.id}-inline-crit"  class="my-inline-roll">Critical</a>
+             </td></tr>`;
+             damageRolls.push(db)
+          }
+          
+          
           dpIndex++;
         }
+        
         if (!actor.shield?.data.data.equipped && item.data.data?.damage?.versatile){
           let dt = item.data.data.damage.parts[0][1];
           damageRolls.push(`<tr><th align="left">Versatile</th><td>[[/r ` + 
@@ -876,9 +889,11 @@ Dialog.persist({
                   if (flavor.toUpperCase().includes('ATTACK')) flavorType = ' + Attack (adv/dis)';
                   if (targetElement.attr('data-flavor').toUpperCase().includes('DAMAGE')) flavorType = ' + Crit Dice';
                   let newRoll = new Roll(oldFormula);
+                  console.log(newRoll)
                   let terms = [];
-                  for (let _uuid of newRoll.terms.filter(_uuid=> _uuid.constructor.name === 'Die'))
-                    terms.push(_uuid)
+                  for (let t of newRoll.terms.filter(t=> t.constructor.name === 'Die' || t.constructor.name === 'OperatorTerm'))
+                    terms.push(t)
+                    
                   let formula = Roll.fromTerms(terms)._formula;
                   targetElement.attr('data-formula', formula);
                   targetElement.attr('data-flavor', flavor + flavorType);
@@ -1157,9 +1172,9 @@ Dialog.persist({
                   console.log(item.data.data.level, spellLevel, spellLevel-parseInt(item.data.data.level));
                   let upcast = spellLevel-parseInt(item.data.data.level);
                   if (spellLevel==="0" && actor.type==='character') 
-                    return ChatMessage.create({speaker:ChatMessage.getSpeaker({actor: item.parent}),flavor:`Casts ${item.name} ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`});
+                    return ChatMessage.create({speaker:ChatMessage.getSpeaker({token: item.parent.getActiveTokens()[0]}),flavor:`Casts ${item.name} ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`});
                   if (spellLevel==="0" && actor.type==='npc') 
-                    return ChatMessage.create({speaker:ChatMessage.getSpeaker({actor: item.parent}),flavor:`Casts ${item.name} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`, whisper: ChatMessage.getWhisperRecipients("GM")});
+                    return ChatMessage.create({speaker:ChatMessage.getSpeaker({token: item.parent.getActiveTokens()[0]}),flavor:`Casts ${item.name} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`, whisper: ChatMessage.getWhisperRecipients("GM")});
                   let spells = JSON.parse(JSON.stringify(actor.data.data.spells));
                   if (spells['spell'+spellLevel].value != 0) {
                     spells['spell'+spellLevel].value--;
@@ -1187,9 +1202,9 @@ Dialog.persist({
                     await actor.update({'data.spells': spells});
                     $(this).html(spells['spell'+spellLevel].value+'/'+spells['spell'+spellLevel].max);
                     if (actor.type==='character')
-                      ChatMessage.create({speaker:ChatMessage.getSpeaker({actor: item.parent}),flavor:`Casts ${item.name} with a level ${spellLevel} slot  ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`});
+                      ChatMessage.create({speaker:ChatMessage.getSpeaker({token: item.parent.getActiveTokens()[0]}),flavor:`Casts ${item.name} with a level ${spellLevel} slot  ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`});
                     else
-                      ChatMessage.create({speaker:ChatMessage.getSpeaker({actor: item.parent}),flavor:`Casts ${item.name} with a level ${spellLevel} slot  ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`, whisper: ChatMessage.getWhisperRecipients("GM")});
+                      ChatMessage.create({speaker:ChatMessage.getSpeaker({token: item.parent.getActiveTokens()[0]}),flavor:`Casts ${item.name} with a level ${spellLevel} slot  ${upcast>0?'<br>Upcast ' + upcast:''} ${(item.labels.save===undefined?'':'<br>Save '+item.labels.save)}`, whisper: ChatMessage.getWhisperRecipients("GM")});
                     if (actor.hasPlayerOwner)
                       ui.chat.processMessage(`/w GM ${actor.data.name} Level ${spellLevel} Slots: (${ spells['spell'+spellLevel].value}/${spells['spell'+spellLevel].max})`);
                   }
@@ -2362,12 +2377,18 @@ static async spellPreparation(...args){
     if (token) actor = token.actor;
     let character = game.user.character;
     
-  if (args[0]) token = canvas.tokens.placeables.filter(t=>t.actor?.uuid===args[0].replaceAll('_','.'))[0];
-if (!token) return;
-token.control({releaseOthers:true});
+  let actorUuid = ``;
+if (!args[0]) return;
+actorUuid = args[0].replaceAll('_','.');
+if (!actorUuid) return;
+actorUuid = args[0].replaceAll('_','.');
+actor = await fromUuid(actorUuid);
+//if (args[0]) token = canvas.tokens.placeables.filter(t=>t.actor?.uuid===args[0].replaceAll('_','.'))[0];
+//if (!token) return;
+//control({releaseOthers:true});
 let w_id = "spell-preparation";
 let position =  {width: 930 , height: '100%', id: w_id};
-let spells = token.actor.itemTypes.spell.sort((a, b)=> (a.data.data.level > b.data.data.level) ? 1 : (a.data.data.level === b.data.data.level) ? ((a.data.name > b.data.name) ? 1 : -1) : -1  );
+let spells = actor.itemTypes.spell.sort((a, b)=> (a.data.data.level > b.data.data.level) ? 1 : (a.data.data.level === b.data.data.level) ? ((a.data.name > b.data.name) ? 1 : -1) : -1  );
 let level = -1;
 let list = `<div>`;//<div  style="display:grid; grid-template-columns: repeat(4, 200px)" >`;
 let unprepared = 'rgba(150,150,150,.5) !important';
@@ -2391,11 +2412,11 @@ for (const spell of spells){
 }//<a id="spell-delete-${spell.id}" name="${spell.id}" style="float:right;"><i class="fa fa-times"></i></a>
 list += `</div></div>`;
 Dialog.persist({
-  title: `${token.actor.name} Spells Prepared: `,
+  title: `${actor.name} Spells Prepared: `,
   content:  list,
   render: ()=>{
-    let header = `${token.actor.name} Spells Prepared: 
-    ${token.actor.itemTypes.spell.filter(spell=>spell.data.data.preparation.mode === 'prepared' && spell.data.data.preparation?.prepared).length}`;
+    let header = `${actor.name} Spells Prepared: 
+    ${actor.itemTypes.spell.filter(spell=>spell.data.data.preparation.mode === 'prepared' && spell.data.data.preparation?.prepared).length}`;
     header += `<a title="Spell Sets" style="float: right" id="spell-sets-macro-button"><i class="fas fa-list"></i>&nbsp;Spell Sets</i></a>`;
     
     $(`#${w_id} > header > h4`).html(header);
@@ -2403,18 +2424,18 @@ Dialog.persist({
     $(`#spell-sets-macro-button`).click(()=>{
       let w = Object.values(ui.windows).find(w=> w.id === `spell-sets`);
       if (w?.appId) w.bringToTop();
-      else dnd5eByDialog.spellPreparationSets();
+      else dnd5eByDialog.spellPreparationSets(actorUuid);
     });
     
     $("input#myspellInput").focus();
     
     $("a[id^=spell-name]").contextmenu(async function(e){
-        let spell = token.actor.items.get(this.name);
+        let spell = actor.items.get(this.name);
         console.log(spell);
         spell.sheet.render(true);
     });
     $("a[id^=spell-name]").click(async function(){
-      let spell = token.actor.items.get(this.name);
+      let spell = actor.items.get(this.name);
         if (spell.data.data.preparation.mode !== 'prepared') 
           return ui.notifications.warn(`${spell.data.name} is not a preparable spell`);
         await  spell.update({"data.preparation.prepared":!spell.data.data.preparation.prepared})
@@ -2425,14 +2446,14 @@ Dialog.persist({
         else 
           $(this).attr('style', `color : ${unprepared}`);
         
-        let header = `${token.actor.name} Spells Prepared: 
-        ${token.actor.itemTypes.spell.filter(spell=>spell.data.data.preparation.mode === 'prepared' && spell.data.data.preparation?.prepared).length}`;
+        let header = `${actor.name} Spells Prepared: 
+        ${actor.itemTypes.spell.filter(spell=>spell.data.data.preparation.mode === 'prepared' && spell.data.data.preparation?.prepared).length}`;
         header += `<a title="Spell Sets" style="float: right" id="spell-sets-macro-button"><i class="fas fa-list"></i>&nbsp;Spell Sets</i></a>`;
         $(`#${w_id} > header > h4`).html(header);
         
     });
     $("a[id^=spell-delete]").click(async function(){
-        let spell = token.actor.spells.get(this.name);
+        let spell = actor.spells.get(this.name);
         await spell.delete();
         $(this).parent().remove();
     }); 
@@ -2458,17 +2479,25 @@ static async spellPreparationSets(...args){
     if (token) actor = token.actor;
     let character = game.user.character;
     
-  let w_id = `spell-sets`;
+  let actorUuid = ``;
+if (!args[0]) return;
+actorUuid = args[0].replaceAll('_','.');
+if (!actorUuid) return;
+actorUuid = args[0].replaceAll('_','.');
+actor = await fromUuid(actorUuid);
+//if (args[0]) token = canvas.tokens.
+
+let w_id = `spell-sets`;
 let position = Object.values(ui.windows).find(w=> w.id === `spell-sets`)?.position || { height:'100%', width: '100%' , id: `spell-sets`};
 position["id"] = w_id;
-let sets = token.actor.data.flags.world.SpellSets;
+let sets = actor.data.flags.world.SpellSets;
 console.log(sets);
-if (!sets) await token.actor.setFlag('world','SpellSets', [])
+if (!sets) await actor.setFlag('world','SpellSets', [])
 let content = `<input id="new-set-name" type="text" placeholder="new set name" style="width:150px"></input>&emsp;<a id="add-spell-set-button"><i class="fas fa-plus"></i></a><div id="spell-sets" style="display:grid; grid-template-columns: repeat(${sets.length}, 190px)">`;
 for (let spellSet of sets){
   content += `<div style="width: 190px"><a class="spell-set" name="${spellSet.name}" onclick="console.log('${spellSet.name}')" style="font-size: 1.2em;">${spellSet.name}</a>`;
   for (let s_id of spellSet.spells) {
-        let s = token.actor.items.get(s_id);
+        let s = actor.items.get(s_id);
         content += `<li><img src="${s.data.img}" height="14" style="background: url(../ui/denim075.png) repeat;"/>
         <span> ${s.data.name}</span></li>`;
       }
@@ -2476,26 +2505,26 @@ for (let spellSet of sets){
 }
 content += '</div>';
 let d = new Dialog({
-  title: `${token.actor.name} Spell Sets` ,
+  title: `${actor.name} Spell Sets` ,
   content,
   render: (app) => {
     
     $('.spell-set').click(async function() {
       let name = $(this).attr('name');
-      let spellSet = token.actor.data.flags.world.SpellSets.find(s=>s.name===name);
+      let spellSet = actor.data.flags.world.SpellSets.find(s=>s.name===name);
       let updates = actor.itemTypes.spell.filter(s=>s.data.data.preparation.mode === 'prepared').map(s=> {return {_id:s.id, "data.preparation.prepared":spellSet.spells?.includes(s.id)}});
       console.log(updates)
       await actor.updateEmbeddedDocuments("Item", updates);
       dnd5eByDialog.spellPreparation();
       if (Object.values(ui.windows).find(w=> w.id === `spell-preparation`))
-        dnd5eByDialog.spellPreparation(token.actor.uuid);
+        dnd5eByDialog.spellPreparation(actor.uuid);
     });
     
     $('.spell-set').contextmenu(async function() {
       let name = $(this).attr('name');
       let del = await dialogYesNo(`Delete spell set named: ${name}?`)
       if (!del) return;
-      let SpellSets = token.actor.data.flags.world.SpellSets;
+      let SpellSets = actor.data.flags.world.SpellSets;
       let foundIndex = SpellSets.findIndex(n=>n.name===name);
       if (foundIndex>-1) {
         SpellSets.splice(foundIndex, 1);
@@ -2508,8 +2537,8 @@ let d = new Dialog({
     $('#add-spell-set-button').click(async function(){
       let name = $(this).prev().val();
       if (!name) return;
-      let preparedSpells = token.actor.itemTypes.spell.filter(s=>s.data.data.preparation.mode === 'prepared' && s.data.data.preparation.prepared).map(s=>s.id);
-      let flag = token.actor.data.flags.world.SpellSets;
+      let preparedSpells = actor.itemTypes.spell.filter(s=>s.data.data.preparation.mode === 'prepared' && s.data.data.preparation.prepared).map(s=>s.id);
+      let flag = actor.data.flags.world.SpellSets;
       flag.push({name, spells: preparedSpells});
       await actor.setFlag('world', 'SpellSets', flag);
       dnd5eByDialog.spellPreparation();
