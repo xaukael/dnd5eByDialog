@@ -927,7 +927,7 @@ Dialog.persist({
                   let ability = dcArray[dcArray.length-1];
                   let dc = parseInt(dcArray[dcArray.length-2]);
                   let abil = Object.keys(CONFIG.DND5E.abilities).find(key => CONFIG.DND5E.abilities[key] === ability);
-                  ChatMessage.create({speaker:ChatMessage.getSpeaker({actor: item.parent}), flavor: `Rolling Saves for ${item.data.name}...`})
+                  ChatMessage.create({speaker:ChatMessage.getSpeaker({token: actor.getActiveTokens()[0]}), flavor: `Rolling Saves for ${item.data.name}...`})
                   for (let target of game.user.targets) {
                     let roll = await new Roll(`1d20 + ${target.actor.data.data.abilities[abil].save}`).roll({ async: true });
                     let result;
@@ -936,7 +936,7 @@ Dialog.persist({
                     else
                       result = 'Succeeded';
                       
-                    roll.toMessage({speaker:ChatMessage.getSpeaker({actor: item.parent}),flavor:`${target.name}<br><b>${result}</b> ${ability} Save for ${item.name}`,"flags.world.save":{[target.id]:result}},{rollMode: 'blindroll'});
+                    roll.toMessage({speaker:ChatMessage.getSpeaker({token: actor.getActiveTokens()[0]}),flavor:`${target.name}<br><b>${result}</b> ${ability} Save for ${item.name}`,"flags.world.save":{[target.id]:result}},{rollMode: 'blindroll'});
                     //console.log(roll.total)
                   }
                 });
