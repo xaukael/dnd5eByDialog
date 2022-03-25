@@ -2760,7 +2760,7 @@ for (const [key, value] of Object.entries(actor.data.data[rollType])){
   let text = CONFIG.DND5E[rollType][key] ;
   content += `<div align="left" style="margin-bottom:.75em;">${text}</div>
     <div align="right"> 
-    [[/r 1d20 + ${value[bonus]}${(addedBonus)?addedBonus: ''} # ${text} ${abilType}]]
+    [[/r 1d20 + ${value[bonus]}${(addedBonus)?' + ' + addedBonus: ''} # ${text} ${abilType}]]
     <a id="inline-adv"  class="my-inline-roll" >ADV</a>
     <a id="inline-d20"  class="my-inline-roll" style="display:none"><i class="fas fa-dice-d20"></i></a>
     <a id="inline-dis"  class="my-inline-roll" >DIS</a>
