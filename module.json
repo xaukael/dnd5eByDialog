@@ -4,7 +4,7 @@
     "title": "dnd5eByDialog",
     "description": "Absurd dialog macros turned into a module",
     "author": "Allen",
-    "version": "0.0.2",
+    "version": "0.0.4",
     "minimumCoreVersion": "0.8.9",
     "compatibleCoreVersion": "0.8.9",
     "scripts": ["dnd5eByDialog.js"],
