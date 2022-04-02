@@ -25,7 +25,7 @@ if (actorUuid) {
     actor = token.actor;
   }
   else actor = await fromUuid(actorUuid)
-}
+} 
 t = actor.uuid.replaceAll('.','_');
 
 let w_id = `menu-${t}`;
@@ -238,7 +238,7 @@ static async characterDialog(...args){
     
   let {actorUuid, type, position, closeOnMouseLeave} = args[0] || {};
 console.log(args[0], actorUuid, type, position, closeOnMouseLeave)
-let sortByActionType = false;
+let sortByActionType = true;
 //let closeOnMouseLeave = args[3];
 let closeTimeout = 1000;
 console.log('closeOnMouseLeave', closeOnMouseLeave);
@@ -1106,7 +1106,6 @@ Dialog.persist({
                 });
                 
                 $(`a[id^=${item.id}-ammo-count]`).contextmenu(async function(e){
-                  $(this).off('oncontextmenu');
                   let count = $(`a#${item.id}-ammo-count`).html();
                     count++;
                   let a = actor.items.get(this.name);
@@ -1118,7 +1117,6 @@ Dialog.persist({
                 });
                 
                 $(`a[id^=${item.id}-ammo-count]`).click(async function(e){
-                  //$(this).off('onclick');
                   let count = parseInt($(`a#${item.id}-ammo-count`).html());
                   if (count > 0) {
                     count--;
@@ -1988,6 +1986,23 @@ let d = new Dialog({
         $("a.mirm").css('textShadow' , "unset");
         $(this).css('textShadow' , "0 0 8px red");
     });
+    /*
+    $(`a[id^=ib-]`).click(async function() {
+      let message = game.messages.contents.reverse().filter(m=>m._roll && m.data.user === game.user.id)[0]
+      let roll = message.roll;
+      let toAdd = $(this).text();
+      let d6Roll = await new Roll(toAdd).roll();
+      await game.dice3d.showForRoll( d6Roll );
+      roll._evaluated=false;
+      roll._total=null;
+      roll.terms.push(Roll.parse('+')[0])
+      roll.terms.push(d6Roll.terms[0])
+      await roll.evaluate();
+      roll._formula = roll.formula;
+      game.macros.getName('updateChatMessage(id, update)').execute(message.id, {content:roll.total, roll:JSON.stringify(roll)});
+      //await message.update({content:roll.total, roll:JSON.stringify(roll)})
+    });
+    */
     $(`a[id^=ib-]`).click(async function(e){
         let targetElement = $("#built-roll");
         let toAdd = $(this).text();
@@ -2167,6 +2182,7 @@ let d = new Dialog({
         targetElement.attr('data-formula', formula);
         targetElement.html(`<i class="fas fa-dice-d20"></i> ${formula}`);
     });
+    
     $(`#built-roll`).contextmenu(async function(e){
         if (e.ctrlKey)
           console.log(Roll.parse($(this).attr('data-formula')));
